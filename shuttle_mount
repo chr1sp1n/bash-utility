@@ -1,0 +1,43 @@
+#!/bin/bash
+
+STATICRHOST=$1
+LOCALRHOST=$2
+RPATH=/media
+LPATH=/media/SHUTTLE
+RUSER=$3
+RPASS=$4
+ICON=/home/chris/scripts/Christian_Spinelli_Logo/circled_hand/circled_hand_256.png
+RHOST=""
+
+count=$( ping -c5 -i0.25 $LOCALRHOST | grep icmp* | wc -l )
+if [ $count -gt "2" ]; then
+	RHOST=${LOCALRHOST}
+else
+	count=$( ping -c5 -i0.25 $STATICRHOST | grep icmp* | wc -l )
+	if [ $count -gt "2" ]; then
+		RHOST=${STATICRHOST}
+	fi
+fi
+echo -e "[INFO] Connecting to SHUTTLE at address:" $RHOST
+
+
+if [ $count -gt 2 ]; then
+	echo -e "[INFO] Connecting to SHUTTLE: "$RHOST
+	if ! mountpoint -q "$LPATH" ; then
+
+		echo $RPASS | sshfs $RUSER@$RHOST:$RPATH $LPATH -o password_stdin
+		if [ $? -eq 0 ]; then
+			notify-send --icon $ICON "SHUTTLE connection" "Connected to SHUTTLE server with IP address: "$RHOST
+			exit 0
+		else
+			notify-send --icon $ICON  "SHUTTLE connection" "Connection to SHUTTLE server fail."
+			exit $?
+		fi
+	else
+		notify-send --icon $ICON  "SHUTTLE connection" "Network folder already mounted."
+		exit $?
+	fi
+else
+	notify-send --icon $ICON  "SHUTTLE connection" "Connection to SHUTTLE server fail."
+	exit $?
+fi
